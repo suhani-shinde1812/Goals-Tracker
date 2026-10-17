@@ -1,0 +1,40 @@
+name: iOS Build Configuration
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.x'
+          channel: 'stable'
+
+      - name: Install dependencies
+        working-directory: ./flutter_app
+        run: flutter pub get
+
+      - name: Build iOS Application (No Codesign for unsigned verification)
+        working-directory: ./flutter_app
+        run: flutter build ios --release --no-codesign
+
+      # Note: Apple Distribution certificate, provisioning profile, and APPLE_EXPORT_OPTIONS
+      # secrets must be configured in GitHub Secrets for full IPA generation and export.
+      - name: Sign & Export IPA (When Certificates Present)
+        if: env.APPLE_CERTIFICATE_BASE64 != ''
+        working-directory: ./flutter_app
+        run: |
+          echo "Signing and exporting IPA with Apple Developer credentials..."
+          flutter build ipa --release
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}

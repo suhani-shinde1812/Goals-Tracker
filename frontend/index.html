@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BloomTrack — My Life, Health & Goals</title>
+  <meta name="description" content="Personal health, fitness, PCOD management, study planning, placement preparation, and daily habit tracking.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- App Container -->
+  <div id="app" class="app-layout">
+    
+    <!-- Sidebar Navigation (Desktop) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo">
+          <div class="logo-icon"><i class="fa-solid fa-seedling"></i></div>
+          <div class="brand-text">
+            <h2>BloomTrack</h2>
+            <span class="tagline">Life, Health & Goals</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="dashboard" id="nav-dashboard">
+          <i class="fa-solid fa-house"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="tasks" id="nav-tasks">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Daily Routine</span>
+          <span class="badge" id="tasks-badge">0</span>
+        </button>
+        <button class="nav-item" data-view="habits" id="nav-habits">
+          <i class="fa-solid fa-fire"></i>
+          <span>Habits & Streaks</span>
+        </button>
+        <button class="nav-item" data-view="health" id="nav-health">
+          <i class="fa-solid fa-heart-pulse"></i>
+          <span>PCOD & Wellness</span>
+        </button>
+        <button class="nav-item" data-view="digestive" id="nav-digestive">
+          <i class="fa-solid fa-hand-holding-medical"></i>
+          <span>Gut & Digestion</span>
+        </button>
+        <button class="nav-item" data-view="workouts" id="nav-workouts">
+          <i class="fa-solid fa-person-walking"></i>
+          <span>Home Workouts</span>
+        </button>
+        <button class="nav-item" data-view="gate" id="nav-gate">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <span>GATE CS 2027</span>
+        </button>
+        <button class="nav-item" data-view="semester" id="nav-semester">
+          <i class="fa-solid fa-book-bookmark"></i>
+          <span>Semester Exams</span>
+        </button>
+        <button class="nav-item" data-view="excelr" id="nav-excelr">
+          <i class="fa-solid fa-laptop-code"></i>
+          <span>ExcelR Placement</span>
+        </button>
+        <button class="nav-item" data-view="settings" id="nav-settings">
+          <i class="fa-solid fa-sliders"></i>
+          <span>Profile & Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-widget" id="user-profile-widget">
+          <div class="avatar"><i class="fa-solid fa-user"></i></div>
+          <div class="user-meta">
+            <span class="user-name" id="user-display-name">Guest User</span>
+            <span class="user-email" id="user-display-email">Not logged in</span>
+          </div>
+          <button class="btn-logout" id="btn-logout-toggle" title="Account / Logout"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-toggle" id="mobile-sidebar-toggle"><i class="fa-solid fa-bars"></i></button>
+          <div class="greeting-box">
+            <h1 id="topbar-greeting">Welcome back!</h1>
+            <p id="topbar-date" class="current-date-display">Loading date...</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="btn-icon" id="btn-notifications-dialog" title="Reminders">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notif-dot"></span>
+          </button>
+          <button class="btn-primary-sm" id="btn-quick-log"><i class="fa-solid fa-plus"></i> Quick Log</button>
+        </div>
+      </header>
+
+      <!-- View Containers (Rendered dynamically) -->
+      <div class="view-viewport" id="viewport">
+        <!-- Views injected via app.js -->
+      </div>
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav">
+      <button class="mobile-nav-item active" data-view="dashboard">
+        <i class="fa-solid fa-house"></i>
+        <span>Home</span>
+      </button>
+      <button class="mobile-nav-item" data-view="tasks">
+        <i class="fa-solid fa-list-check"></i>
+        <span>Planner</span>
+      </button>
+      <button class="mobile-nav-item" data-view="health">
+        <i class="fa-solid fa-heart-pulse"></i>
+        <span>Health</span>
+      </button>
+      <button class="mobile-nav-item" data-view="gate">
+        <i class="fa-solid fa-graduation-cap"></i>
+        <span>Study</span>
+      </button>
+      <button class="mobile-nav-item" data-view="settings">
+        <i class="fa-solid fa-user"></i>
+        <span>Profile</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Global Modal Container -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box" id="modal-box">
+      <!-- Injected modal content -->
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

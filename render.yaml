@@ -1,0 +1,44 @@
+services:
+  # 1. FastAPI REST API Backend Service
+  - type: web
+    name: bloomtrack-api
+    runtime: python
+    region: oregon
+    plan: starter
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bloomtrack-postgres
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: "https://bloomtrack.onrender.com,https://bloomtrack-web.onrender.com,http://localhost:3000,http://127.0.0.1:8000"
+
+  # 2. Static Site Deployment for Web Frontend
+  - type: web
+    name: bloomtrack-web
+    runtime: static
+    region: oregon
+    plan: free
+    rootDir: frontend
+    buildCommand: "echo 'Static assets ready'"
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+# Managed PostgreSQL Database
+databases:
+  - name: bloomtrack-postgres
+    databaseName: bloomtrack
+    user: bloomtrack_user
+    plan: starter
+    region: oregon
