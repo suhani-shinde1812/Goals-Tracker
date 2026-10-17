@@ -37,22 +37,43 @@ class DashboardSummaryModel {
 
   factory DashboardSummaryModel.fromJson(Map<String, dynamic> json) {
     return DashboardSummaryModel(
-      welcomeMessage: json['welcome_message'] as String? ?? 'Welcome!',
-      todayDate: json['today_date'] as String,
+      welcomeMessage: json['welcome_message'] as String? ?? 'Welcome back!',
+      todayDate: json['today_date'] as String? ?? '',
       completionPercentage: (json['completion_percentage'] as num?)?.toDouble() ?? 0.0,
-      totalTasksToday: json['total_tasks_today'] as int? ?? 0,
+      totalTasksToday: json['total_tasks_today'] as int? ?? 17,
       completedTasksToday: json['completed_tasks_today'] as int? ?? 0,
-      pendingTasksToday: json['pending_tasks_today'] as int? ?? 0,
-      waterIntakeTodayMl: json['water_intake_today_ml'] as int? ?? 0,
+      pendingTasksToday: json['pending_tasks_today'] as int? ?? 17,
+      waterIntakeTodayMl: json['water_intake_today_ml'] as int? ?? 500,
       waterTargetMl: json['water_target_ml'] as int? ?? 2200,
       currentWeightKg: (json['current_weight_kg'] as num?)?.toDouble() ?? 66.0,
       targetWeightKg: (json['target_weight_kg'] as num?)?.toDouble() ?? 56.0,
       workoutCompletedToday: json['workout_completed_today'] as bool? ?? false,
-      gateTopicsCompleted: json['gate_topics_completed'] as int? ?? 0,
-      gateTotalTopics: json['gate_total_topics'] as int? ?? 0,
-      semesterAvgCompletionPct: (json['semester_avg_completion_pct'] as num?)?.toDouble() ?? 0.0,
+      gateTopicsCompleted: json['gate_topics_completed'] as int? ?? 4,
+      gateTotalTopics: json['gate_total_topics'] as int? ?? 38,
+      semesterAvgCompletionPct: (json['semester_avg_completion_pct'] as num?)?.toDouble() ?? 20.0,
       daysSinceLastPeriod: json['days_since_last_period'] as int?,
-      recentBloatingLevel: json['recent_bloating_level'] as int? ?? 0,
+      recentBloatingLevel: json['recent_bloating_level'] as int? ?? 1,
+    );
+  }
+
+  factory DashboardSummaryModel.defaultOffline(String date) {
+    return DashboardSummaryModel(
+      welcomeMessage: 'Welcome to BloomTrack!',
+      todayDate: date,
+      completionPercentage: 0.0,
+      totalTasksToday: 17,
+      completedTasksToday: 0,
+      pendingTasksToday: 17,
+      waterIntakeTodayMl: 500,
+      waterTargetMl: 2200,
+      currentWeightKg: 66.0,
+      targetWeightKg: 56.0,
+      workoutCompletedToday: false,
+      gateTopicsCompleted: 4,
+      gateTotalTopics: 38,
+      semesterAvgCompletionPct: 20.0,
+      daysSinceLastPeriod: null,
+      recentBloatingLevel: 1,
     );
   }
 }
