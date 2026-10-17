@@ -4,7 +4,7 @@ services:
     name: bloomtrack-api
     runtime: python
     region: oregon
-    plan: starter
+    plan: free
     rootDir: backend
     buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
@@ -33,10 +33,10 @@ services:
         source: /*
         destination: /index.html
 
-# Managed PostgreSQL Database
+# Managed PostgreSQL Database (Free Tier)
 databases:
   - name: bloomtrack-postgres
     databaseName: bloomtrack
     user: bloomtrack_user
-    plan: starter
+    plan: free
     region: oregon
