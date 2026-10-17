@@ -165,8 +165,16 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   OutlinedButton.icon(
                     onPressed: () async {
-                      await ApiService.addHydration(selectedDate, 250);
+                      final updated = await ApiService.addHydration(selectedDate, 250);
                       ref.refresh(dashboardProvider);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Added +250ml. Today: ${updated}ml / 2200ml'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
                     },
                     icon: const Icon(Icons.add, size: 16),
                     label: const Text('+250ml'),
@@ -174,8 +182,16 @@ class DashboardScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     onPressed: () async {
-                      await ApiService.addHydration(selectedDate, 500);
+                      final updated = await ApiService.addHydration(selectedDate, 500);
                       ref.refresh(dashboardProvider);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Added +500ml. Today: ${updated}ml / 2200ml'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
                     },
                     icon: const Icon(Icons.add, size: 16),
                     label: const Text('+500ml'),

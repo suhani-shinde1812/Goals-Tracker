@@ -1,69 +1,121 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
+import '../providers/dashboard_provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  @override
   Widget build(BuildContext context) {
+    final isLoggedIn = ApiService.isLoggedIn;
+    final displayName = ApiService.userName ?? 'BloomTrack Wellness';
+    final displayEmail = ApiService.userEmail ?? 'user@bloomtrack.com';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile & Preferences', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Profile & Account', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Center(
+          Center(
             child: CircleAvatar(
               radius: 40,
               backgroundColor: AppTheme.primarySoft,
-              child: Icon(Icons.person, size: 48, color: AppTheme.primaryColor),
+              child: const Icon(Icons.person, size: 48, color: AppTheme.primaryColor),
             ),
           ),
           const SizedBox(height: 12),
-          const Center(
+          Center(
             child: Text(
-              'BloomTrack Wellness',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              displayName,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ),
-          const Center(
-            child: Text('user@bloomtrack.com', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+          Center(
+            child: Text(displayEmail, style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+          ),
+          const SizedBox(height: 16),
+
+          // Account Management Actions
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.push('/auth');
+                },
+                icon: const Icon(Icons.account_circle, size: 18),
+                label: Text(isLoggedIn ? 'Switch / Create Account' : 'Sign In / Register'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              if (isLoggedIn) ...[
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await ApiService.logout();
+                    ref.refresh(dashboardProvider);
+                    setState(() {});
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Logged out')),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.logout, size: 18, color: Colors.red),
+                  label: const Text('Log Out', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 24),
 
           Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: Column(
-              children: [
+              children: const [
                 ListTile(
-                  leading: const Icon(Icons.timer_outlined, color: AppTheme.primaryColor),
-                  title: const Text('Timezone'),
-                  subtitle: const Text('Asia/Kolkata (IST)'),
+                  leading: Icon(Icons.timer_outlined, color: AppTheme.primaryColor),
+                  title: Text('Timezone'),
+                  subtitle: Text('Asia/Kolkata (IST)'),
                 ),
-                const Divider(height: 1),
+                Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.bedtime_outlined, color: AppTheme.primaryColor),
-                  title: const Text('Quiet Hours'),
-                  subtitle: const Text('22:15 – 06:30'),
+                  leading: Icon(Icons.bedtime_outlined, color: AppTheme.primaryColor),
+                  title: Text('Quiet Hours'),
+                  subtitle: Text('22:15 – 06:30'),
                 ),
-                const Divider(height: 1),
+                Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.water_drop_outlined, color: AppTheme.primaryColor),
-                  title: const Text('Daily Hydration Target'),
-                  subtitle: const Text('2,200 ml'),
+                  leading: Icon(Icons.water_drop_outlined, color: AppTheme.primaryColor),
+                  title: Text('Daily Hydration Target'),
+                  subtitle: Text('2,200 ml'),
                 ),
-                const Divider(height: 1),
+                Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.fitness_center_outlined, color: AppTheme.primaryColor),
-                  title: const Text('Workout Preference'),
-                  subtitle: const Text('Beginner Home Workouts'),
+                  leading: Icon(Icons.fitness_center_outlined, color: AppTheme.primaryColor),
+                  title: Text('Workout Preference'),
+                  subtitle: Text('Beginner Home Workouts'),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: Column(
               children: [
                 ListTile(
@@ -75,11 +127,14 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.file_download_outlined, color: AppTheme.accentBlue),
-                  title: const Text('Export My Data'),
-                  subtitle: const Text('JSON & CSV formats'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                  onTap: () {},
+                  leading: const Icon(Icons.cloud_sync_outlined, color: AppTheme.accentBlue),
+                  title: const Text('Cloud Sync Status'),
+                  subtitle: Text(isLoggedIn ? 'Connected to live cloud API' : 'Local mode active'),
+                  trailing: Icon(
+                    isLoggedIn ? Icons.check_circle : Icons.offline_bolt,
+                    color: isLoggedIn ? Colors.green : Colors.orange,
+                    size: 18,
+                  ),
                 ),
               ],
             ),

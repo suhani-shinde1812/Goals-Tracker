@@ -8,18 +8,23 @@ import 'screens/tasks_screen.dart';
 import 'screens/health_screen.dart';
 import 'screens/study_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/auth_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiService.init();
-  // Attempt auto-login with default credentials
-  await ApiService.login('user@bloomtrack.com', 'SecretPassword123!');
+  // Auto authenticate with demo fallback in background
+  ApiService.autoAuthenticate();
   runApp(const ProviderScope(child: BloomTrackApp()));
 }
 
 final _router = GoRouter(
   initialLocation: '/',
   routes: [
+    GoRoute(
+      path: '/auth',
+      builder: (context, state) => const AuthScreen(),
+    ),
     ShellRoute(
       builder: (context, state, child) {
         return ScaffoldWithNavBar(child: child);
