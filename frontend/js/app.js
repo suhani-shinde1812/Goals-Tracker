@@ -1,7 +1,9 @@
 // BloomTrack Frontend Application Engine
-const API_BASE = window.location.origin.includes(':3000') || window.location.origin.includes(':8080')
-  ? 'http://127.0.0.1:8000/api/v1'
-  : '/api/v1';
+const API_BASE = window.location.origin.includes('onrender.com') && !window.location.origin.includes('bloomtrack-api')
+  ? 'https://bloomtrack-api.onrender.com/api/v1'
+  : (window.location.origin.includes(':3000') || window.location.origin.includes(':8080')
+    ? 'http://127.0.0.1:8000/api/v1'
+    : '/api/v1');
 
 const state = {
   token: localStorage.getItem('bloomtrack_token') || null,
