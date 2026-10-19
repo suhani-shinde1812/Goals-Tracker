@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/dashboard_provider.dart';
 import '../models/dashboard_model.dart';
@@ -8,6 +9,145 @@ import '../services/api_service.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
+
+  void _showManualWeightDialog(BuildContext context, WidgetRef ref, double currentWeight) {
+    final controller = TextEditingController(text: currentWeight.toStringAsFixed(1));
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Log Today\'s Weight', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Enter your current weight in kg:', style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              decoration: const InputDecoration(
+                suffixText: 'kg',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.scale_rounded),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text('Target Weight: 56.0 kg', style: TextStyle(fontSize: 12, color: AppTheme.primaryColor, fontWeight: FontWeight.w600)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white),
+            onPressed: () async {
+              final val = double.tryParse(controller.text.trim());
+              if (val != null && val > 30 && val < 200) {
+                await ApiService.setManualWeight(val);
+                ref.refresh(dashboardProvider);
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Weight updated to $val kg!')),
+                  );
+                }
+              }
+            },
+            child: const Text('Save Weight'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPeriodDatePicker(BuildContext context, WidgetRef ref) async {
+    final lastLogged = await ApiService.getLastPeriodDate();
+    final initialDate = lastLogged != null ? DateTime.tryParse(lastLogged) ?? DateTime.now() : DateTime.now();
+
+    if (!context.mounted) return;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2025, 1, 1),
+      lastDate: DateTime.now(),
+      helpText: 'SELECT LAST PERIOD START DATE',
+    );
+
+    if (picked != null) {
+      final dateStr = picked.toIso8601String().split('T')[0];
+      await ApiService.setLastPeriodDate(dateStr);
+      ref.refresh(dashboardProvider);
+      if (context.mounted) {
+        final days = DateTime.now().difference(picked).inDays;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Period start date set: $dateStr (Day $days of cycle)')),
+        );
+      }
+    }
+  }
+
+  void _showMonthlyReportDialog(BuildContext context) async {
+    final report = await ApiService.generateMonthlyReportText();
+    if (!context.mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (_, scrollController) => Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: ListView(
+            controller: scrollController,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Monthly Progress Report', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const Divider(),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAF9),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.borderColor),
+                ),
+                child: SelectableText(
+                  report,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12, height: 1.4),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: report));
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Report copied to clipboard! Ready to paste or save.')),
+                  );
+                },
+                icon: const Icon(Icons.copy_rounded),
+                label: const Text('Copy / Export Report to Clipboard'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,6 +171,11 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.description_outlined),
+            tooltip: 'Monthly Report',
+            onPressed: () => _showMonthlyReportDialog(context),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
@@ -82,7 +227,7 @@ class DashboardScreen extends ConsumerWidget {
           // Welcome Banner
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: AppTheme.primarySoft,
               borderRadius: BorderRadius.circular(16),
@@ -98,10 +243,33 @@ class DashboardScreen extends ConsumerWidget {
                     color: AppTheme.primaryDark,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   'Small habits. Better health. Bigger goals.',
                   style: TextStyle(fontSize: 13, color: AppTheme.primaryColor.withOpacity(0.9)),
+                ),
+                const SizedBox(height: 12),
+                // Daily Task Percentage Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Daily Tasks: ${summary.completedTasksToday}/${summary.totalTasksToday} Done',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                    ),
+                    Text(
+                      '${summary.completionPercentage.round()}%',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                LinearProgressIndicator(
+                  value: summary.totalTasksToday > 0 ? (summary.completedTasksToday / summary.totalTasksToday) : 0,
+                  backgroundColor: Colors.white.withOpacity(0.6),
+                  color: AppTheme.primaryColor,
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ],
             ),
@@ -115,9 +283,9 @@ class DashboardScreen extends ConsumerWidget {
             children: [
               _buildStatCard(
                 context,
-                title: 'Tasks',
+                title: 'Tasks Done',
                 value: '${summary.completedTasksToday}/${summary.totalTasksToday}',
-                sub: '${summary.completionPercentage.round()}% Done',
+                sub: '${summary.completionPercentage.round()}% Completed',
                 icon: Icons.checklist_rounded,
                 color: AppTheme.accentMint,
               ),
@@ -131,23 +299,49 @@ class DashboardScreen extends ConsumerWidget {
               ),
               _buildStatCard(
                 context,
-                title: 'Weight',
-                value: '${summary.currentWeightKg} kg',
-                sub: 'Target: ${summary.targetWeightKg} kg',
+                title: 'Current Weight',
+                value: '${summary.currentWeightKg.toStringAsFixed(1)} kg',
+                sub: 'Target: 56.0 kg (Tap to edit)',
                 icon: Icons.scale_rounded,
                 color: AppTheme.accentWarm,
+                onTap: () => _showManualWeightDialog(context, ref, summary.currentWeightKg),
               ),
               _buildStatCard(
                 context,
-                title: 'GATE CS',
-                value: '${summary.gateTopicsCompleted}/${summary.gateTotalTopics}',
-                sub: 'Topics Done',
-                icon: Icons.school_rounded,
-                color: AppTheme.primaryColor,
+                title: 'PCOD Cycle',
+                value: summary.daysSinceLastPeriod != null ? 'Day ${summary.daysSinceLastPeriod}' : 'Set Date',
+                sub: summary.daysSinceLastPeriod != null ? 'Since last period' : 'Tap to log start',
+                icon: Icons.favorite_rounded,
+                color: Colors.pink.shade400,
+                onTap: () => _showPeriodDatePicker(context, ref),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+
+          // Quick Action Buttons Row
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _showManualWeightDialog(context, ref, summary.currentWeightKg),
+                  icon: const Icon(Icons.monitor_weight_outlined, size: 16),
+                  label: const Text('Log Weight', style: TextStyle(fontSize: 12)),
+                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 10)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _showPeriodDatePicker(context, ref),
+                  icon: const Icon(Icons.calendar_month, size: 16),
+                  label: const Text('Set Period Date', style: TextStyle(fontSize: 12)),
+                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 10)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
 
           // Quick Hydration Add
           Card(
@@ -203,9 +397,18 @@ class DashboardScreen extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // Today Schedule
-          const Text(
-            "Today's Schedule & Routine",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textMain),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Today's Routine Checklist",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textMain),
+              ),
+              Text(
+                '${summary.completedTasksToday}/17 Done',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
 
@@ -231,8 +434,8 @@ class DashboardScreen extends ConsumerWidget {
           child: ListTile(
             leading: Checkbox(
               value: task.isCompleted,
-              onChanged: (_) {
-                ref.read(tasksProvider.notifier).toggleTask(task.id);
+              onChanged: (_) async {
+                await ref.read(tasksProvider.notifier).toggleTask(task.id);
                 ref.refresh(dashboardProvider);
               },
             ),
@@ -262,27 +465,39 @@ class DashboardScreen extends ConsumerWidget {
     required String sub,
     required IconData icon,
     required Color color,
+    VoidCallback? onTap,
   }) {
     final width = (MediaQuery.of(context).size.width - 44) / 2;
-    return Container(
-      width: width > 160 ? width : 160,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.bgCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 10),
-          Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.textMain)),
-          const SizedBox(height: 2),
-          Text(sub, style: const TextStyle(fontSize: 11, color: AppTheme.textLight)),
-        ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: width > 160 ? width : 160,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.bgCard,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: color, size: 26),
+                if (onTap != null)
+                  const Icon(Icons.edit_outlined, size: 14, color: AppTheme.textMuted),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 4),
+            Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.textMain)),
+            const SizedBox(height: 2),
+            Text(sub, style: const TextStyle(fontSize: 11, color: AppTheme.textLight), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ],
+        ),
       ),
     );
   }

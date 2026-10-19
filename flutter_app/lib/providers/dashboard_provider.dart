@@ -28,24 +28,18 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<ScheduledTaskModel>>> 
   }
 
   Future<void> toggleTask(int taskId) async {
+    // 1. Persist to storage & remote
+    final isCompleted = await ApiService.toggleTaskCompletion(date, taskId);
+    // 2. Update Riverpod state immediately
     final currentTasks = state.value ?? [];
-    // Optimistic update
     state = AsyncValue.data(
       currentTasks.map((t) {
         if (t.id == taskId) {
-          return t.copyWith(isCompleted: !t.isCompleted);
+          return t.copyWith(isCompleted: isCompleted);
         }
         return t;
       }).toList(),
     );
-
-    // Sync with backend database
-    final updated = await ApiService.toggleTaskCompletion(taskId);
-    if (updated != null) {
-      state = AsyncValue.data(
-        currentTasks.map((t) => t.id == taskId ? updated : t).toList(),
-      );
-    }
   }
 }
 
