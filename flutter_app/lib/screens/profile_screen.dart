@@ -79,7 +79,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = ApiService.isLoggedIn;
-    final displayName = ApiService.userName ?? 'BloomTrack Wellness';
+    final displayName = ApiService.userName ?? 'HerBloom Wellness';
     final displayEmail = ApiService.userEmail ?? 'user@bloomtrack.com';
 
     return Scaffold(

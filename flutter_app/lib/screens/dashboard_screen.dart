@@ -336,7 +336,7 @@ class DashboardScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'BloomTrack',
+              'HerBloom',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             Text(

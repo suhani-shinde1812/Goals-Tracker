@@ -96,7 +96,7 @@ class DashboardSummaryModel {
 
   factory DashboardSummaryModel.defaultOffline(String date) {
     return DashboardSummaryModel(
-      welcomeMessage: 'Welcome to BloomTrack!',
+      welcomeMessage: 'Welcome to HerBloom!',
       todayDate: date,
       completionPercentage: 0.0,
       totalTasksToday: 17,

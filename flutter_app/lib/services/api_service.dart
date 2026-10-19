@@ -74,7 +74,7 @@ class ApiService {
     // Check local registered credentials first for instant login
     final savedEmail = prefs.getString('saved_registered_email');
     final savedPassword = prefs.getString('saved_registered_password');
-    final savedName = prefs.getString('saved_registered_name') ?? 'BloomTrack User';
+    final savedName = prefs.getString('saved_registered_name') ?? 'HerBloom User';
 
     if (savedEmail == email && savedPassword == password) {
       await saveAuth('local_token_${DateTime.now().millisecondsSinceEpoch}', email, savedName);
@@ -85,7 +85,7 @@ class ApiService {
 
     // Default demo user credentials
     if (email == 'user@bloomtrack.com' && password == 'SecretPassword123!') {
-      await saveAuth('demo_token', email, 'BloomTrack Wellness');
+      await saveAuth('demo_token', email, 'HerBloom Wellness');
       _tryRemoteLogin(email, password);
       return true;
     }
@@ -101,7 +101,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['access_token'];
-        await saveAuth(token, email, 'BloomTrack User');
+        await saveAuth(token, email, 'HerBloom User');
         await fetchUserProfile();
         return true;
       }
@@ -567,7 +567,7 @@ class ApiService {
     final periodInfo = await getPeriodCycleInfo();
     final daysSincePeriod = periodInfo['daysSince'] as int?;
 
-    final name = _userName ?? 'BloomTrack Wellness';
+    final name = _userName ?? 'HerBloom Wellness';
 
     return DashboardSummaryModel(
       welcomeMessage: 'Welcome back, ${name.split(" ")[0]}!',
@@ -603,12 +603,12 @@ class ApiService {
 
     final buffer = StringBuffer();
     buffer.writeln('====================================================');
-    buffer.writeln('         BLOOMTRACK MONTHLY PROGRESS REPORT         ');
+    buffer.writeln('          HERBLOOM MONTHLY PROGRESS REPORT          ');
     buffer.writeln('                Month: $currentMonthStr             ');
     buffer.writeln('====================================================\n');
 
     buffer.writeln('1. USER ACCOUNT & HEALTH PROFILE');
-    buffer.writeln('   User Name: ${_userName ?? "BloomTrack Wellness"}');
+    buffer.writeln('   User Name: ${_userName ?? "HerBloom Wellness"}');
     buffer.writeln('   Email: ${_userEmail ?? "user@bloomtrack.com"}');
     buffer.writeln('   Current Weight: $weight kg (Target: 56.0 kg)');
     buffer.writeln('   Starting Weight: 66.0 kg (Weight change: ${(weight - 66.0).toStringAsFixed(1)} kg)');

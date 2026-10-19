@@ -15,7 +15,7 @@ void main() async {
   await ApiService.init();
   // Auto authenticate with demo fallback in background
   ApiService.autoAuthenticate();
-  runApp(const ProviderScope(child: BloomTrackApp()));
+  runApp(const ProviderScope(child: HerBloomApp()));
 }
 
 final _router = GoRouter(
@@ -55,13 +55,13 @@ final _router = GoRouter(
   ],
 );
 
-class BloomTrackApp extends StatelessWidget {
-  const BloomTrackApp({super.key});
+class HerBloomApp extends StatelessWidget {
+  const HerBloomApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'BloomTrack — My Life, Health & Goals',
+      title: 'HerBloom — My Life, Health & Goals',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: _router,

@@ -128,7 +128,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 16),
                   Center(
                     child: Text(
-                      isSignUp ? 'Join BloomTrack' : 'Welcome Back',
+                      isSignUp ? 'Join HerBloom' : 'Welcome Back',
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
                     ),
                   ),
