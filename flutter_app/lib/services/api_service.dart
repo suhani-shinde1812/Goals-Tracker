@@ -235,12 +235,105 @@ class ApiService {
   }
 
   static Future<List<ScheduledTaskModel>> getTasks(String date) async {
+    final prefs = await SharedPreferences.getInstance();
     final completedIds = await getCompletedTaskIds(date);
-    final baseTasks = getOfflineTasks(date);
 
-    return baseTasks.map((t) {
+    final storedJson = prefs.getString('tasks_list_$date');
+    List<ScheduledTaskModel> tasks;
+    if (storedJson != null) {
+      try {
+        final list = jsonDecode(storedJson) as List;
+        tasks = list.map((item) => ScheduledTaskModel.fromJson(item)).toList();
+      } catch (e) {
+        tasks = getOfflineTasks(date);
+      }
+    } else {
+      tasks = getOfflineTasks(date);
+    }
+
+    return tasks.map((t) {
       return t.copyWith(isCompleted: completedIds.contains(t.id));
     }).toList();
+  }
+
+  static Future<ScheduledTaskModel> addTask(
+    String date,
+    String title,
+    String scheduledTime,
+    String category,
+    int durationMinutes,
+    String priority,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final tasks = await getTasks(date);
+    final newId = DateTime.now().millisecondsSinceEpoch % 100000000;
+
+    final newTask = ScheduledTaskModel(
+      id: newId,
+      userId: 1,
+      title: title,
+      category: category,
+      date: date,
+      scheduledTime: scheduledTime,
+      durationMinutes: durationMinutes,
+      priority: priority,
+      isCompleted: false,
+    );
+
+    tasks.add(newTask);
+    final encoded = jsonEncode(tasks.map((t) => t.toJson()).toList());
+    await prefs.setString('tasks_list_$date', encoded);
+
+    // Try remote sync
+    try {
+      http.post(
+        Uri.parse('$baseUrl/tasks'),
+        headers: _headers,
+        body: jsonEncode({
+          'title': title,
+          'category': category,
+          'date': date,
+          'scheduled_time': scheduledTime,
+          'duration_minutes': durationMinutes,
+          'priority': priority,
+          'order_index': tasks.length,
+        }),
+      ).timeout(const Duration(seconds: 4));
+    } catch (_) {}
+
+    return newTask;
+  }
+
+  static Future<bool> deleteTask(String date, int taskId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final tasks = await getTasks(date);
+    tasks.removeWhere((t) => t.id == taskId);
+
+    final encoded = jsonEncode(tasks.map((t) => t.toJson()).toList());
+    await prefs.setString('tasks_list_$date', encoded);
+
+    // Also remove from completed set if present
+    final completed = await getCompletedTaskIds(date);
+    if (completed.contains(taskId)) {
+      completed.remove(taskId);
+      await prefs.setStringList('completed_tasks_$date', completed.map((e) => e.toString()).toList());
+    }
+
+    // Try remote sync
+    try {
+      http.delete(
+        Uri.parse('$baseUrl/tasks/$taskId'),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 4));
+    } catch (_) {}
+
+    return true;
+  }
+
+  static Future<void> resetTasksToDefault(String date) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('tasks_list_$date');
+    await prefs.remove('completed_tasks_$date');
   }
 
   // --- Hydration (With Immediate Persistent Local Tracking) ---
@@ -460,10 +553,10 @@ class ApiService {
   // --- Dynamic Dashboard Summary (Always in sync with local data) ---
 
   static Future<DashboardSummaryModel> getDashboardSummary(String date) async {
-    final completedIds = await getCompletedTaskIds(date);
-    final completedTasksCount = completedIds.length;
-    const totalTasksCount = 17;
-    final pct = (completedTasksCount / totalTasksCount) * 100.0;
+    final tasks = await getTasks(date);
+    final totalTasksCount = tasks.isNotEmpty ? tasks.length : 17;
+    final completedTasksCount = tasks.where((t) => t.isCompleted).length;
+    final pct = totalTasksCount > 0 ? (completedTasksCount / totalTasksCount) * 100.0 : 0.0;
 
     final waterIntake = await getLocalWaterIntake(date);
     final currentWeight = await getCurrentWeight();

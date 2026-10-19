@@ -10,6 +10,181 @@ import '../services/api_service.dart';
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
+  void _showAddTaskSheet(BuildContext context, WidgetRef ref) {
+    final titleController = TextEditingController();
+    final timeController = TextEditingController(text: '08:00 - 09:00');
+    final durationController = TextEditingController(text: '60');
+    String selectedCategory = 'Health';
+    String selectedPriority = 'high';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Add Custom Goal / Task', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: titleController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Task / Goal Title',
+                  hintText: 'e.g., Morning Yoga, Practice DSA, Client Meeting',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.task_alt),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextField(
+                      controller: timeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Scheduled Time',
+                        hintText: 'e.g. 07:00 - 08:00',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.access_time),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      controller: durationController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Duration (min)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: selectedCategory,
+                      decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                      items: const [
+                        DropdownMenuItem(value: 'Health', child: Text('Health')),
+                        DropdownMenuItem(value: 'Study', child: Text('Study')),
+                        DropdownMenuItem(value: 'Work', child: Text('Work')),
+                        DropdownMenuItem(value: 'Wellness', child: Text('Wellness')),
+                        DropdownMenuItem(value: 'GATE', child: Text('GATE')),
+                        DropdownMenuItem(value: 'Placement', child: Text('Placement')),
+                        DropdownMenuItem(value: 'Personal', child: Text('Personal')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setModalState(() => selectedCategory = val);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: selectedPriority,
+                      decoration: const InputDecoration(labelText: 'Priority', border: OutlineInputBorder()),
+                      items: const [
+                        DropdownMenuItem(value: 'high', child: Text('High')),
+                        DropdownMenuItem(value: 'medium', child: Text('Medium')),
+                        DropdownMenuItem(value: 'low', child: Text('Low')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setModalState(() => selectedPriority = val);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final title = titleController.text.trim();
+                  if (title.isEmpty) return;
+                  final time = timeController.text.trim();
+                  final duration = int.tryParse(durationController.text.trim()) ?? 30;
+
+                  await ref.read(tasksProvider.notifier).addTask(
+                    title,
+                    time,
+                    selectedCategory,
+                    duration,
+                    selectedPriority,
+                  );
+                  ref.refresh(dashboardProvider);
+
+                  if (ctx.mounted) {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Added task "$title" at $time!')),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.add_task),
+                label: const Text('Add to Schedule', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeleteTask(BuildContext context, WidgetRef ref, ScheduledTaskModel task) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Task', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('Remove "${task.title}" from your schedule?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () async {
+              await ref.read(tasksProvider.notifier).deleteTask(task.id);
+              ref.refresh(dashboardProvider);
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Removed "${task.title}"')),
+                );
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showManualWeightDialog(BuildContext context, WidgetRef ref, double currentWeight) {
     final controller = TextEditingController(text: currentWeight.toStringAsFixed(1));
     showDialog(
@@ -171,6 +346,11 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Add Task',
+            onPressed: () => _showAddTaskSheet(context, ref),
+          ),
           IconButton(
             icon: const Icon(Icons.description_outlined),
             tooltip: 'Monthly Report',
@@ -396,7 +576,7 @@ class DashboardScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          // Today Schedule
+          // Today Schedule Header with Add Task Button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -404,17 +584,18 @@ class DashboardScreen extends ConsumerWidget {
                 "Today's Routine Checklist",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textMain),
               ),
-              Text(
-                '${summary.completedTasksToday}/17 Done',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+              TextButton.icon(
+                onPressed: () => _showAddTaskSheet(context, ref),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Add Task', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           const SizedBox(height: 10),
 
           tasksAsync.when(
-            data: (tasks) => _buildTasksList(context, ref, tasks.isEmpty ? ApiService.getOfflineTasks(selectedDate) : tasks),
-            loading: () => _buildTasksList(context, ref, ApiService.getOfflineTasks(selectedDate)),
+            data: (tasks) => _buildTasksList(context, ref, tasks),
+            loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, __) => _buildTasksList(context, ref, ApiService.getOfflineTasks(selectedDate)),
           ),
         ],
@@ -423,6 +604,29 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildTasksList(BuildContext context, WidgetRef ref, List<ScheduledTaskModel> tasks) {
+    if (tasks.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Center(
+            child: Column(
+              children: [
+                const Icon(Icons.check_circle_outline, size: 36, color: AppTheme.textMuted),
+                const SizedBox(height: 8),
+                const Text('No tasks scheduled for today.'),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () => _showAddTaskSheet(context, ref),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add a Custom Goal / Task'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -451,6 +655,11 @@ class DashboardScreen extends ConsumerWidget {
             subtitle: Text(
               '${task.scheduledTime ?? 'Anytime'} • ${task.category}',
               style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey),
+              tooltip: 'Delete Task',
+              onPressed: () => _confirmDeleteTask(context, ref, task),
             ),
           ),
         );

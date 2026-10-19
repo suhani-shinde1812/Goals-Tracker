@@ -41,6 +41,27 @@ class TasksNotifier extends StateNotifier<AsyncValue<List<ScheduledTaskModel>>> 
       }).toList(),
     );
   }
+
+  Future<void> addTask(
+    String title,
+    String scheduledTime,
+    String category,
+    int durationMinutes,
+    String priority,
+  ) async {
+    await ApiService.addTask(date, title, scheduledTime, category, durationMinutes, priority);
+    await loadTasks();
+  }
+
+  Future<void> deleteTask(int taskId) async {
+    await ApiService.deleteTask(date, taskId);
+    await loadTasks();
+  }
+
+  Future<void> resetToDefault() async {
+    await ApiService.resetTasksToDefault(date);
+    await loadTasks();
+  }
 }
 
 final tasksProvider = StateNotifierProvider.autoDispose<TasksNotifier, AsyncValue<List<ScheduledTaskModel>>>((ref) {
