@@ -190,19 +190,9 @@ class ApiService {
         final model = DashboardSummaryModel.fromJson(jsonDecode(response.body));
         // Ensure local quick adds take precedence if local is higher
         final effectiveWater = model.waterIntakeTodayMl > localWater ? model.waterIntakeTodayMl : localWater;
-        return DashboardSummaryModel(
-          targetDate: model.targetDate,
+        return model.copyWith(
           welcomeMessage: _userName != null ? 'Welcome back, ${_userName!.split(" ")[0]}!' : model.welcomeMessage,
-          completedTasksToday: model.completedTasksToday,
-          totalTasksToday: model.totalTasksToday,
-          completionPercentage: model.completionPercentage,
           waterIntakeTodayMl: effectiveWater,
-          waterTargetMl: model.waterTargetMl,
-          currentWeightKg: model.currentWeightKg,
-          targetWeightKg: model.targetWeightKg,
-          activeStreakDays: model.activeStreakDays,
-          gateTopicsCompleted: model.gateTopicsCompleted,
-          gateTotalTopics: model.gateTotalTopics,
         );
       }
     } catch (e) {
@@ -211,19 +201,9 @@ class ApiService {
 
     // Offline fallback
     final fallback = DashboardSummaryModel.defaultOffline(date);
-    return DashboardSummaryModel(
-      targetDate: fallback.targetDate,
+    return fallback.copyWith(
       welcomeMessage: _userName != null ? 'Welcome back, ${_userName!.split(" ")[0]}!' : fallback.welcomeMessage,
-      completedTasksToday: fallback.completedTasksToday,
-      totalTasksToday: fallback.totalTasksToday,
-      completionPercentage: fallback.completionPercentage,
       waterIntakeTodayMl: localWater,
-      waterTargetMl: fallback.waterTargetMl,
-      currentWeightKg: fallback.currentWeightKg,
-      targetWeightKg: fallback.targetWeightKg,
-      activeStreakDays: fallback.activeStreakDays,
-      gateTopicsCompleted: fallback.gateTopicsCompleted,
-      gateTotalTopics: fallback.gateTotalTopics,
     );
   }
 

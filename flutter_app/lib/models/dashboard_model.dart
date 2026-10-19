@@ -35,6 +35,44 @@ class DashboardSummaryModel {
     required this.recentBloatingLevel,
   });
 
+  DashboardSummaryModel copyWith({
+    String? welcomeMessage,
+    String? todayDate,
+    double? completionPercentage,
+    int? totalTasksToday,
+    int? completedTasksToday,
+    int? pendingTasksToday,
+    int? waterIntakeTodayMl,
+    int? waterTargetMl,
+    double? currentWeightKg,
+    double? targetWeightKg,
+    bool? workoutCompletedToday,
+    int? gateTopicsCompleted,
+    int? gateTotalTopics,
+    double? semesterAvgCompletionPct,
+    int? daysSinceLastPeriod,
+    int? recentBloatingLevel,
+  }) {
+    return DashboardSummaryModel(
+      welcomeMessage: welcomeMessage ?? this.welcomeMessage,
+      todayDate: todayDate ?? this.todayDate,
+      completionPercentage: completionPercentage ?? this.completionPercentage,
+      totalTasksToday: totalTasksToday ?? this.totalTasksToday,
+      completedTasksToday: completedTasksToday ?? this.completedTasksToday,
+      pendingTasksToday: pendingTasksToday ?? this.pendingTasksToday,
+      waterIntakeTodayMl: waterIntakeTodayMl ?? this.waterIntakeTodayMl,
+      waterTargetMl: waterTargetMl ?? this.waterTargetMl,
+      currentWeightKg: currentWeightKg ?? this.currentWeightKg,
+      targetWeightKg: targetWeightKg ?? this.targetWeightKg,
+      workoutCompletedToday: workoutCompletedToday ?? this.workoutCompletedToday,
+      gateTopicsCompleted: gateTopicsCompleted ?? this.gateTopicsCompleted,
+      gateTotalTopics: gateTotalTopics ?? this.gateTotalTopics,
+      semesterAvgCompletionPct: semesterAvgCompletionPct ?? this.semesterAvgCompletionPct,
+      daysSinceLastPeriod: daysSinceLastPeriod ?? this.daysSinceLastPeriod,
+      recentBloatingLevel: recentBloatingLevel ?? this.recentBloatingLevel,
+    );
+  }
+
   factory DashboardSummaryModel.fromJson(Map<String, dynamic> json) {
     return DashboardSummaryModel(
       welcomeMessage: json['welcome_message'] as String? ?? 'Welcome back!',
